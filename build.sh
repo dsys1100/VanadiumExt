@@ -2,12 +2,10 @@
 source common.sh
 set_keys
 export VERSION=$(grep -m1 -o '[0-9]\+\(\.[0-9]\+\)\{3\}' vanadium/args.gn)
-export CHROMIUM_SOURCE=https://chromium.googlesource.com/chromium/src.git # https://github.com/chromium/chromium.git
+export CHROMIUM_SOURCE=https://chromium.googlesource.com/chromium/src.git
 export DEBIAN_FRONTEND=noninteractive
-sudo apt update
-sudo apt install -y sudo lsb-release file nano git curl python3 python3-pillow
+sudo apt update && sudo apt install -y sudo lsb-release file nano git curl python3 python3-pillow
 
-# https://github.com/uazo/cromite/blob/master/tools/images/chr-source/prepare-build.sh
 git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
 export PATH="$PWD/depot_tools:$PATH"
 mkdir -p chromium/src/out/Default; cd chromium
@@ -36,23 +34,16 @@ EOF
 git submodule foreach git config -f ./.git/config submodule.$name.ignore all
 git config --add remote.origin.fetch '+refs/tags/*:refs/tags/*'
 
-# https://grapheneos.org/build#browser-and-webview
 rm -rf $SCRIPT_DIR/vanadium/patches/*trichrome-{apk-build-targets,browser-apk-targets}.patch
-replace "$SCRIPT_DIR/vanadium/patches" "VANADIUM" "HELIUM"
-replace "$SCRIPT_DIR/vanadium/patches" "Vanadium" "Helium"
-replace "$SCRIPT_DIR/vanadium/patches" "vanadium" "helium"
+replace "$SCRIPT_DIR/vanadium/patches" "VANADIUM" "VANADIUMEXT"
+replace "$SCRIPT_DIR/vanadium/patches" "Vanadium" "VanadiumExt"
+replace "$SCRIPT_DIR/vanadium/patches" "vanadium" "vanadiumExt"
 git am --whitespace=nowarn --keep-non-patch $SCRIPT_DIR/vanadium/patches/*.patch
 
 gclient sync -D --no-history --nohooks
 gclient runhooks
 rm -rf third_party/angle/third_party/VK-GL-CTS/
 ./build/install-build-deps.sh --no-prompt
-
-# https://github.com/imputnet/helium-linux/blob/main/scripts/shared.sh
-# python3 "${SCRIPT_DIR}/helium/utils/name_substitution.py" --sub -t .
-# python3 "${SCRIPT_DIR}/helium/utils/helium_version.py" --tree "${SCRIPT_DIR}/helium" --chromium-tree .
-# python3 "${SCRIPT_DIR}/helium/utils/generate_resources.py" "${SCRIPT_DIR}/helium/resources/generate_resources.txt" "${SCRIPT_DIR}/helium/resources"
-# python3 "${SCRIPT_DIR}/helium/utils/replace_resources.py" "${SCRIPT_DIR}/helium/resources/helium_resources.txt" "${SCRIPT_DIR}/helium/resources" .
 
 sed -i 's/BASE_FEATURE(kExtensionManifestV2Unsupported, base::FEATURE_ENABLED_BY_DEFAULT);/BASE_FEATURE(kExtensionManifestV2Unsupported, base::FEATURE_DISABLED_BY_DEFAULT);/' extensions/common/extension_features.cc
 sed -i 's/BASE_FEATURE(kExtensionManifestV2Disabled, base::FEATURE_ENABLED_BY_DEFAULT);/BASE_FEATURE(kExtensionManifestV2Disabled, base::FEATURE_DISABLED_BY_DEFAULT);/' extensions/common/extension_features.cc
@@ -73,7 +64,7 @@ sed -i 's/extension_toolbar_baseline_width">600dp/extension_toolbar_baseline_wid
 TOOLBAR_PHONE
 
 cat > out/Default/args.gn <<EOF
-chrome_public_manifest_package = "io.github.jqssun.helium"
+chrome_public_manifest_package = "ru.dsys1100.vanadiumExt"
 is_desktop_android = true
 target_os = "android"
 target_cpu = "arm64"
@@ -111,17 +102,17 @@ include_both_v8_snapshots = false
 include_both_v8_snapshots_android_secondary_abi = false
 generate_linker_map = true
 EOF
-gn gen out/Default # gn args out/Default; echo 'treat_warnings_as_errors = false' >> out/Default/args.gn
+gn gen out/Default
 autoninja -C out/Default chrome_public_apk
 mkdir -p out/tmp out/release
 mv $(find out/Default/apks -name 'Chrome*.apk') out/tmp/$VERSION-arm64-v8a.apk
 
-sed -i 's/target_cpu = "arm64"/target_cpu = "arm"/' out/Default/args.gn
-autoninja -C out/Default chrome_public_apk
-mv $(find out/Default/apks -name 'Chrome*.apk') out/tmp/$VERSION-armeabi-v7a.apk
+#sed -i 's/target_cpu = "arm64"/target_cpu = "arm"/' out/Default/args.gn
+#autoninja -C out/Default chrome_public_apk
+#mv $(find out/Default/apks -name 'Chrome*.apk') out/tmp/$VERSION-armeabi-v7a.apk
 
 export PATH=$PWD/third_party/jdk/current/bin/:$PATH
 export ANDROID_HOME=$PWD/third_party/android_sdk/public
 sign_apk out/tmp/$VERSION-arm64-v8a.apk out/release/$VERSION-arm64-v8a.apk
-sign_apk out/tmp/$VERSION-armeabi-v7a.apk out/release/$VERSION-armeabi-v7a.apk
+#sign_apk out/tmp/$VERSION-armeabi-v7a.apk out/release/$VERSION-armeabi-v7a.apk
 rm -rf $SCRIPT_DIR/keys
