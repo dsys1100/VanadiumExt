@@ -71,7 +71,7 @@ target_cpu = "arm64"
 is_component_build = false
 is_debug = false
 is_official_build = true
-symbol_level = 1
+symbol_level = 0
 disable_fieldtrial_testing_config = true
 ffmpeg_branding = "Chrome"
 proprietary_codecs = true
@@ -84,17 +84,21 @@ enable_reporting = false
 google_api_key = "x"
 google_default_client_id = "x"
 google_default_client_secret = "x"
-
-use_siso = true
-use_login_database_as_backend = false
+blink_symbol_level = 0
 build_contextual_search = false
 build_with_tflite_lib = true
+chrome_pgo_phase = 0
 dcheck_always_on = false
+enable_hangout_services_extension = false
 enable_iterator_debugging = false
+enable_mdns = false
 exclude_unwind_tables = false
 icu_use_data_file = true
 rtc_build_examples = false
+use_debug_fission = false
+use_thin_lto = false
 use_errorprone_java_compiler = false
+use_official_google_api_keys = false
 use_rtti = false
 enable_av1_decoder = true
 enable_dav1d_decoder = true
@@ -102,6 +106,7 @@ include_both_v8_snapshots = false
 include_both_v8_snapshots_android_secondary_abi = false
 generate_linker_map = true
 EOF
+
 gn gen out/Default
 autoninja -C out/Default chrome_public_apk
 mkdir -p out/tmp out/release
